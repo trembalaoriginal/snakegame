@@ -1,13 +1,41 @@
 const express = require('express');
-const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
-    cors: { origin: '*' }
-});
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
-app.use(cors());
 
-const PORT = process.env.PORT || 3001;
+const app = express();
+const server = http.createServer(app);
+
+app.use(cors({
+  origin: 'https://snakegame2-5r2n.onrender.com/', // substitua com sua URL real do frontend
+  methods: ['GET', 'POST']
+}));
+
+const io = new Server(server, {
+  cors: {
+    origin: 'https://snakegame2-5r2n.onrender.com',
+    methods: ['GET', 'POST']
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Novo jogador conectado:', socket.id);
+
+  socket.on('join', (data) => {
+    console.log(`Jogador ${data.name} entrou`);
+    socket.emit('welcome', `Bem-vindo, ${data.name}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Jogador desconectado:', socket.id);
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
+
 
 // Dimensões do mapa (dobro do Agar.io padrão)
 const MAP_WIDTH = 10000;
