@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors'); // Embora o CORS do Socket.IO seja prioritário, manteremos para qualquer requisição HTTP direta futura.
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app); // Cria a instância do servidor HTTP
@@ -10,14 +10,14 @@ const server = http.createServer(app); // Cria a instância do servidor HTTP
 // O origin deve ser a URL COMPLETA do seu frontend no Render.
 // Removido o '/' no final da URL para evitar problemas de correspondência.
 app.use(cors({
-    origin: 'https://snakegame2-5r2n.onrender.com', // Substitua com a URL REAL do seu frontend no Render
+    origin: 'https://snakegame2-5r2n.onrender.com', // **ATENÇÃO: SUBSTITUA COM A URL REAL DO SEU FRONTEND NO RENDER!**
     methods: ['GET', 'POST']
 }));
 
 // Configuração do Socket.IO com CORS
 const io = new Server(server, {
     cors: {
-        origin: 'https://snakegame2-5r2n.onrender.com', // Substitua com a URL REAL do seu frontend no Render
+        origin: 'https://snakegame2-5r2n.onrender.com', // **ATENÇÃO: SUBSTITUA COM A URL REAL DO SEU FRONTEND NO RENDER!**
         methods: ['GET', 'POST']
     }
 });
@@ -102,83 +102,4 @@ io.on('connection', (socket) => {
 
         // Notifica os outros jogadores sobre o novo jogador
         socket.broadcast.emit('newPlayer', players[socket.id]);
-        console.log(`[PLAYER] ${name} (${socket.id}) started the game.`);
-    });
-
-    // Evento 'move': Quando um jogador muda de direção
-    socket.on('move', (data) => {
-        const player = players[socket.id];
-        if (player && player.isAlive) {
-            // Previne que a cobra vire 180 graus instantaneamente (ex: de 'right' para 'left')
-            const currentDirection = player.direction;
-            if (data.direction === 'up' && currentDirection !== 'down') player.direction = 'up';
-            else if (data.direction === 'down' && currentDirection !== 'up') player.direction = 'down';
-            else if (data.direction === 'left' && currentDirection !== 'right') player.direction = 'left';
-            else if (data.direction === 'right' && currentDirection !== 'left') player.direction = 'right';
-        }
-    });
-
-    // Removido socket.on('update') pois o servidor agora tem seu próprio game loop
-
-    // Evento 'disconnect': Quando um jogador se desconecta
-    socket.on('disconnect', () => {
-        if (players[socket.id]) {
-            console.log(`[DISCONNECT] User disconnected: ${players[socket.id].name} (${socket.id})`);
-            delete players[socket.id]; // Remove o jogador da lista
-            io.emit('playerDisconnected', socket.id); // Notifica todos os clientes
-        } else {
-            console.log(`[DISCONNECT] Unknown user disconnected: ${socket.id}`);
-        }
-    });
-});
-
-// --- Loop Principal do Jogo (Game Loop do Servidor) ---
-// Este loop é responsável por atualizar o estado do jogo em intervalos regulares
-setInterval(() => {
-    // Itera sobre cada jogador para atualizar sua posição e verificar colisões
-    for (const id in players) {
-        const player = players[id];
-
-        // Se o jogador não estiver vivo, pula sua atualização neste tick
-        if (!player || !player.isAlive) {
-            continue;
-        }
-
-        // Cria uma cópia da cabeça atual da cobra
-        const head = { ...player.snake[0] };
-
-        // Atualiza a posição da cabeça com base na direção
-        if (player.direction === 'up') head.y -= SNAKE_SPEED;
-        else if (player.direction === 'down') head.y += SNAKE_SPEED;
-        else if (player.direction === 'left') head.x -= SNAKE_SPEED;
-        else if (player.direction === 'right') head.x += SNAKE_SPEED;
-
-        // Adiciona a nova cabeça ao array da cobra
-        player.snake.unshift(head);
-
-        let ateFood = false;
-        // Verifica colisões da cabeça com as comidas
-        // Itera de trás para frente para remover itens com segurança durante a iteração
-        for (let i = foods.length - 1; i >= 0; i--) {
-            const food = foods[i];
-            const dist = Math.hypot(head.x - food.x, head.y - food.y);
-            // Colisão se a distância entre os centros for menor que a soma dos raios
-            if (dist < SNAKE_SEGMENT_RADIUS + food.size) {
-                foods.splice(i, 1); // Remove a comida
-                generateFood(1); // Gera uma nova comida para substituir
-                ateFood = true;
-                player.score += 1; // Aumenta a pontuação do jogador
-                // Não remove o último segmento da cauda, fazendo a cobra crescer
-                break; // A cobra só come uma comida por tick
-            }
-        }
-
-        if (!ateFood) {
-            // Se não comeu, remove o último segmento para manter o mesmo tamanho
-            player.snake.pop();
-        }
-
-        // --- Verificações de Colisão (Se o jogador ainda estiver vivo após o movimento) ---
-
-        // 1. Colisão com as paredes do mapa
-        if (head.x < 0 || head.x > MAP_WIDTH || head.y < 0 || head.y > MAP
+        console
